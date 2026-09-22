@@ -1451,7 +1451,26 @@ fun ModelListScreen(navController: NavController, modifier: Modifier = Modifier)
                                 val tagRepository =
                                     remember { TagAutocompleteRepository.getInstance(context) }
                                 val tagDictState by tagRepository.state.collectAsState()
+                                val weakTextTemplateRepository =
+                                    remember { WeakTextTemplateRepository.getInstance(context) }
+                                val weakTextTemplateState by weakTextTemplateRepository.state.collectAsState()
                                 var tagImportInProgress by remember { mutableStateOf(false) }
+                                val weakTextTemplatePickerLauncher = rememberLauncherForActivityResult(
+                                    contract = ActivityResultContracts.GetContent(),
+                                ) { uri ->
+                                    if (uri == null) return@rememberLauncherForActivityResult
+                                    val displayName = getFileNameFromUri(context, uri)
+                                    tagImportInProgress = true
+                                    scope.launch {
+                                        val result = weakTextTemplateRepository.importTemplate(uri, displayName)
+                                        tagImportInProgress = false
+                                        val message = when (result) {
+                                            is ImportResult.Success -> context.getString(R.string.weak_text_template_imported, displayName ?: "")
+                                            is ImportResult.Error -> msgTagImportFailed
+                                        }
+                                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                    }
+                                }
                                 val mainCsvPickerLauncher = rememberLauncherForActivityResult(
                                     contract = ActivityResultContracts.GetContent(),
                                 ) { uri ->
@@ -1734,6 +1753,61 @@ fun ModelListScreen(navController: NavController, modifier: Modifier = Modifier)
                                                         enabled = !tagImportInProgress,
                                                     ) {
                                                         Text(stringResource(R.string.tag_clear))
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(horizontal = 16.dp),
+                                        )
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.weak_text_template),
+                                                style = MaterialTheme.typography.titleSmall,
+                                            )
+                                            Text(
+                                                text = if (weakTextTemplateState.imported) {
+                                                    stringResource(
+                                                        R.string.weak_text_template_imported,
+                                                        weakTextTemplateState.fileName ?: "",
+                                                    )
+                                                } else {
+                                                    stringResource(R.string.weak_text_template_default)
+                                                },
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(top = 8.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            ) {
+                                                Button(
+                                                    onClick = {
+                                                        weakTextTemplatePickerLauncher.launch("*/*")
+                                                    },
+                                                    enabled = !tagImportInProgress,
+                                                    modifier = Modifier.weight(1f),
+                                                ) {
+                                                    Text(
+                                                        if (weakTextTemplateState.imported) {
+                                                            stringResource(R.string.weak_text_template_reimport)
+                                                        } else {
+                                                            stringResource(R.string.weak_text_template_import)
+                                                        },
+                                                    )
+                                                }
+                                                if (weakTextTemplateState.imported) {
+                                                    OutlinedButton(
+                                                        onClick = { weakTextTemplateRepository.clearTemplate() },
+                                                        enabled = !tagImportInProgress,
+                                                    ) {
+                                                        Text(stringResource(R.string.weak_text_template_clear))
                                                     }
                                                 }
                                             }

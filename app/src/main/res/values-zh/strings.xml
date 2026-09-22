@@ -20,6 +20,15 @@
     <string name="tag_main_dictionary_hint">未导入。导入一个 tag 词表（如 danbooru.csv）后联想功能才会启用。</string>
     <string name="tag_translation_dictionary">翻译词表（可选）</string>
     <string name="tag_translation_dictionary_hint">未导入。导入 2 列或 3 列格式的翻译 csv，即可用自己的语言搜索与显示。</string>
+    <string name="weak_text_template">弱文本模板</string>
+    <string name="weak_text_template_hint">导入弱文本模板，用于提示词强化与本地翻译纠错。</string>
+    <string name="weak_text_template_imported">已导入模板：%1$s</string>
+    <string name="weak_text_template_default">使用默认模板</string>
+    <string name="weak_text_template_import">导入模板</string>
+    <string name="weak_text_template_reimport">替换</string>
+    <string name="weak_text_template_clear">恢复默认</string>
+    <string name="strengthen_prompt">强化与翻译提示词</string>
+    <string name="prompt_strengthened">提示词已强化与翻译</string>
     <plurals name="tag_imported_status">
         <item quantity="other">%1$s · %2$d 条</item>
     </plurals>

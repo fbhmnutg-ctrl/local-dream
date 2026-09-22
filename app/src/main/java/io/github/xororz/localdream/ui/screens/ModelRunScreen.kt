@@ -151,6 +151,7 @@ import io.github.xororz.localdream.data.TagAutocompleteRepository
 import io.github.xororz.localdream.data.TagMatchType
 import io.github.xororz.localdream.data.TagSuggestion
 import io.github.xororz.localdream.data.UpscalerRepository
+import io.github.xororz.localdream.data.WeakTextTemplateRepository
 import io.github.xororz.localdream.service.BackendService
 import io.github.xororz.localdream.service.BackgroundGenerationService
 import io.github.xororz.localdream.service.BackgroundGenerationService.GenerationState
@@ -240,6 +241,9 @@ fun ModelRunScreen(
     val msgImageLoadFailed = stringResource(R.string.image_load_failed)
     val msgGenerationInterrupted = stringResource(R.string.generation_interrupted)
     val msgRemoteSelectFailed = stringResource(R.string.remote_select_failed)
+    val msgPromptStrengthened = stringResource(R.string.prompt_strengthened)
+    val msgStrengthenPrompt = stringResource(R.string.strengthen_prompt)
+    val weakTextTemplateRepository = remember { WeakTextTemplateRepository.getInstance(context) }
     // Reaches the screen with the repository already loaded on the normal
     // navigation path; resolves asynchronously after process recreation.
     val model = if (isRemote) {
@@ -2156,19 +2160,50 @@ fun ModelRunScreen(
                             }
                         }
 
-                        ControlledPromptTagTextField(
-                            controller = promptField,
-                            autocompleteAvailable = tagAutocompleteAvailable,
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
-                            label = {
-                                PromptCountLabel(
-                                    label = stringResource(R.string.image_prompt),
-                                    count = promptField.tokenCount,
-                                    max = promptField.tokenMax,
-                                    showCount = promptField.text.isNotEmpty(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            ControlledPromptTagTextField(
+                                controller = promptField,
+                                autocompleteAvailable = tagAutocompleteAvailable,
+                                modifier = Modifier.weight(1f),
+                                label = {
+                                    PromptCountLabel(
+                                        label = stringResource(R.string.image_prompt),
+                                        count = promptField.tokenCount,
+                                        max = promptField.tokenMax,
+                                        showCount = promptField.text.isNotEmpty(),
+                                    )
+                                },
+                            )
+                            IconButton(
+                                onClick = {
+                                    scope.launch {
+                                        val corrected = weakTextTemplateRepository.strengthenAndTranslatePrompt(
+                                            promptField.text,
+                                            tagAutocompleteRepository,
+                                        )
+                                        promptField.replaceText(corrected)
+                                        Toast.makeText(context, msgPromptStrengthened, Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.primaryContainer,
+                                        shape = CircleShape,
+                                    ),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = msgStrengthenPrompt,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(22.dp),
                                 )
-                            },
-                        )
+                            }
+                        }
 
                         ControlledPromptTagTextField(
                             controller = negativePromptField,

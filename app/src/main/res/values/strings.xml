@@ -20,6 +20,15 @@
     <string name="tag_main_dictionary_hint">Not imported. Suggestions are disabled until you import a CSV (e.g. danbooru.csv).</string>
     <string name="tag_translation_dictionary">Translation dictionary (optional)</string>
     <string name="tag_translation_dictionary_hint">Not imported. Import a 2- or 3-column CSV to search by your own language.</string>
+    <string name="weak_text_template">Weak Text Template</string>
+    <string name="weak_text_template_hint">Import a weak text template for prompt strengthening and local translation.</string>
+    <string name="weak_text_template_imported">Template imported: %1$s</string>
+    <string name="weak_text_template_default">Using default template</string>
+    <string name="weak_text_template_import">Import Template</string>
+    <string name="weak_text_template_reimport">Replace</string>
+    <string name="weak_text_template_clear">Reset</string>
+    <string name="strengthen_prompt">Strengthen &amp; Translate Prompt</string>
+    <string name="prompt_strengthened">Prompt strengthened and translated</string>
     <plurals name="tag_imported_status">
         <item quantity="one">%1$s · %2$d entry</item>
         <item quantity="other">%1$s · %2$d entries</item>
