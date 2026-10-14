@@ -1,16 +1,20 @@
-name: Android Build APK
+name: Android Build & Release
 
 on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
 
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -19,23 +23,48 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    - name: Create debug keystore
-      run: |
-        mkdir -p ~/.android
-        keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
-        cp debug.keystore ~/.android/debug.keystore
-
-    # استخدام gradle المباشر للتغلب على غياب ملف gradlew
-    - name: Build APK with Gradle
+    - name: Build Debug APK
       run: |
         gradle assembleDebug --no-daemon \
           -Djava.awt.headless=true \
           -Dkotlin.compiler.execution.strategy=in-process \
           -Dksp.use.ksp2=true
 
-    - name: nagamaty
-      uses: actions/upload-artifact@v4
+    - name: Get version name
+      id: version
+      run: |
+        VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts | head -1)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+
+    - name: Get short SHA
+      id: sha
+      run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
       with:
-        name: nagamaty
-        
-        path: app/build/outputs/apk/debug/*.apk
+        tag_name: v${{ steps.version.outputs.version }}-${{ steps.sha.outputs.sha }}
+        name: LocalDream ${{ steps.version.outputs.version }} (${{ steps.sha.outputs.sha }})
+        body: |
+          ## LocalDream ${{ steps.version.outputs.version }}
+          
+          **Commit:** ${{ github.sha }}
+          **Branch:** ${{ github.ref_name }}
+          **Built:** ${{ github.event.head_commit.timestamp }}
+          
+          ### APK Files
+          - `LocalDream_armv8a_${{ steps.version.outputs.version }}.apk` — Basic version
+          - `LocalDream_armv8a_${{ steps.version.outputs.version }}_with_filter.apk` — With filter
+          
+          ### Installation
+          1. Download the APK
+          2. Enable "Install from unknown sources"
+          3. Install on your arm64-v8a Android device (Android 9+)
+        files: |
+          app/build/outputs/apk/debug/*.apk
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
