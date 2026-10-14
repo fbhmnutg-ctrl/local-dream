@@ -36,6 +36,11 @@ data class GenerationDefaults(
     companion object {
         val GLOBAL = GenerationDefaults()
 
+        // Main generation steps bound used by the settings UI. Raised from the
+        // previous 50-step ceiling to allow longer runs when the device can handle them.
+        const val STEPS_MIN = 1f
+        const val STEPS_MAX = 200f
+
         // UltraFix slider bounds (kept here so the persistence layer and the
         // dialog agree on the clamp range). Denoise steps are additionally
         // capped at the current total step count at use time.
