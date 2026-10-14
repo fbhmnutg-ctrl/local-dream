@@ -2,7 +2,7 @@ name: Android Build & Release
 
 on:
   push:
-    branches: [ "main","master" ]
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 permissions:
@@ -23,6 +23,13 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
+    - name: Show signing config
+      run: |
+        echo "=== HEAD ==="
+        git log -1 --oneline
+        echo "=== signingConfig lines ==="
+        grep -n "signingConfig" app/build.gradle.kts || true
+
     - name: Build Debug APK
       run: |
         gradle assembleDebug --no-daemon \
@@ -30,12 +37,22 @@ jobs:
           -Dkotlin.compiler.execution.strategy=in-process \
           -Dksp.use.ksp2=true
 
+    - name: Verify APK exists
+      run: |
+        echo "=== Searching for APKs ==="
+        find app/build/outputs -name "*.apk" -type f -exec ls -lh {} \;
+        COUNT=$(find app/build/outputs -name "*.apk" -type f | wc -l)
+        if [ "$COUNT" -eq 0 ]; then
+          echo "❌ No APK found. Build failed or produced nothing."
+          exit 1
+        fi
+        echo "✅ Found $COUNT APK(s)"
+
     - name: Get version name
       id: version
       run: |
         VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts | head -1)
         echo "version=$VERSION" >> $GITHUB_OUTPUT
-        echo "Version: $VERSION"
 
     - name: Get short SHA
       id: sha
@@ -48,23 +65,16 @@ jobs:
         name: LocalDream ${{ steps.version.outputs.version }} (${{ steps.sha.outputs.sha }})
         body: |
           ## LocalDream ${{ steps.version.outputs.version }}
-          
           **Commit:** ${{ github.sha }}
           **Branch:** ${{ github.ref_name }}
-          **Built:** ${{ github.event.head_commit.timestamp }}
-          
-          ### APK Files
-          - `LocalDream_armv8a_${{ steps.version.outputs.version }}.apk` — Basic version
-          - `LocalDream_armv8a_${{ steps.version.outputs.version }}_with_filter.apk` — With filter
-          
+
           ### Installation
           1. Download the APK
           2. Enable "Install from unknown sources"
           3. Install on your arm64-v8a Android device (Android 9+)
         files: |
-          app/build/outputs/apk/debug/*.apk
+          app/build/outputs/apk/**/*.apk
         draft: false
         prerelease: false
-        generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
