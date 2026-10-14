@@ -67,6 +67,7 @@ android {
             enableSplit = false
         }
     }
+
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
@@ -75,17 +76,20 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {
-            signingConfig = signingConfigs.getByName("release")
+            // يستخدم توقيع الـ debug الافتراضي (~/.android/debug.keystore) تلقائيًا
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
     buildFeatures {
         compose = true
         buildConfig = true
     }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -94,6 +98,7 @@ android {
             useLegacyPackaging = true
         }
     }
+
     flavorDimensions += "version"
     productFlavors {
         create("basic") {
